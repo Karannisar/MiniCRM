@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MiniCRM Login</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: auto; padding-top: 100px; }
+    input, button { display: block; margin: 10px 0; width: 100%; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Login</h2>
+  <input id="loginEmail" placeholder="Email" />
+  <input id="loginPassword" placeholder="Password" type="password" />
+  <button onclick="login()">Login</button>
+
+  <h2>Register</h2>
+  <input id="registerEmail" placeholder="Email" />
+  <input id="registerPassword" placeholder="Password" type="password" />
+  <button onclick="register()">Register</button>
+
+  <script>
+    const BASE_URL = 'http://localhost:5000/api';
+
+    async function register() {
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      alert(data.msg || 'Registered');
+    }
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        window.location.href = "dashboard.html";
+      } else {
+        alert(data.msg || "Login failed");
+      }
+    }
+  </script>
+</body>
+</html>

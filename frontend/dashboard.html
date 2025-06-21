@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard - MiniCRM</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, select, button { margin: 5px; padding: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Customer Dashboard</h1>
+  <button onclick="logout()">Logout</button>
+
+  <h3>Add Customer</h3>
+  <input id="name" placeholder="Name" />
+  <input id="email" placeholder="Email" />
+  <input id="phone" placeholder="Phone" />
+  <select id="status">
+    <option value="Lead">Lead</option>
+    <option value="Contacted">Contacted</option>
+    <option value="Converted">Converted</option>
+  </select>
+  <button onclick="addCustomer()">Add</button>
+
+  <h3>Your Customers</h3>
+  <table id="customerTable">
+    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const BASE_URL = 'http://localhost:5000/api/customers';
+
+    if (!token) window.location.href = "index.html";
+
+    async function loadCustomers() {
+      const res = await fetch(BASE_URL, {
+        headers: { 'Authorization': token }
+      });
+      const customers = await res.json();
+      const tbody = document.querySelector('#customerTable tbody');
+      tbody.innerHTML = '';
+      customers.forEach(c => {
+        tbody.innerHTML += `
+          <tr>
+            <td><input value="${c.name}" onchange="updateCustomer('${c._id}', 'name', this.value)"/></td>
+            <td><input value="${c.email}" onchange="updateCustomer('${c._id}', 'email', this.value)"/></td>
+            <td><input value="${c.phone}" onchange="updateCustomer('${c._id}', 'phone', this.value)"/></td>
+            <td>
+              <select onchange="updateCustomer('${c._id}', 'status', this.value)">
+                <option value="Lead" ${c.status == 'Lead' ? 'selected' : ''}>Lead</option>
+                <option value="Contacted" ${c.status == 'Contacted' ? 'selected' : ''}>Contacted</option>
+                <option value="Converted" ${c.status == 'Converted' ? 'selected' : ''}>Converted</option>
+              </select>
+            </td>
+            <td><button onclick="deleteCustomer('${c._id}')">Delete</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    async function addCustomer() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const status = document.getElementById('status').value;
+
+      await fetch(BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, phone, status })
+      });
+      loadCustomers();
+    }
+
+    async function updateCustomer(id, field, value) {
+      await fetch(`${BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ [field]: value })
+      });
+    }
+
+    async function deleteCustomer(id) {
+      await fetch(`${BASE_URL}/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': token }
+      });
+      loadCustomers();
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = "index.html";
+    }
+
+    loadCustomers();
+  </script>
+</body>
+</html>
